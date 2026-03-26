@@ -183,6 +183,55 @@ corrs <- xrf_b_long %>%
 
 corrs
 
+
+Table_S3 <- corrs %>%
+  mutate(
+    Comparison = case_when(
+      Core1 == 1 & Core2 == 2 ~ "Core1 vs Core2",
+      Core1 == 1 & Core2 == 3 ~ "Core1 vs Core3",
+      Core1 == 2 & Core2 == 3 ~ "Core2 vs Core3"
+    )
+  ) %>%
+  
+  select(CoreID, Element, Comparison, r) %>%
+  
+  pivot_wider(names_from = Comparison, values_from = r) %>%
+  
+  rowwise() %>%
+  mutate(
+    `Median r` = median(c(`Core1 vs Core2`, `Core1 vs Core3`, `Core2 vs Core3`), na.rm = TRUE),
+    `Min r`    = min(c(`Core1 vs Core2`, `Core1 vs Core3`, `Core2 vs Core3`), na.rm = TRUE),
+    `Max r`    = max(c(`Core1 vs Core2`, `Core1 vs Core3`, `Core2 vs Core3`), na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  
+  mutate(
+    Correlation = case_when(
+      is.na(`Median r`) ~ NA_character_,
+      `Median r` < 0.30 ~ "Weak",
+      `Median r` < 0.60 ~ "Moderate",
+      TRUE              ~ "Strong"
+    )
+  ) %>%
+  
+  rename(Site = CoreID) %>%
+  
+  select(
+    Site,
+    Element,
+    `Core1 vs Core2`,
+    `Core1 vs Core3`,
+    `Core2 vs Core3`,
+    `Median r`,
+    `Min r`,
+    `Max r`,
+    Correlation
+  )
+
+Table_S3
+
+write.xlsx(Table_S3, "Correlation_XRF.xlsx")
+
 corr_summary <- corrs %>%
   group_by(CoreID, Element) %>%
   summarise(
@@ -194,7 +243,7 @@ corr_summary <- corrs %>%
 
 corr_summary
 
-write.xlsx(corrs, "correlaciones.xlsx")
+#write.xlsx(corrs, "correlaciones.xlsx")
 
 
 corrs2 <- read_excel("correlaciones.xlsx")
@@ -208,5 +257,6 @@ corr_summary2 <- corrs2 %>%
   )
 
 corr_summary2
-write.xlsx(corr_summary2, "corrs_summary_OK.xlsx")
+#write.xlsx(corr_summary2, "corrs_summary_OK.xlsx")
+
 
